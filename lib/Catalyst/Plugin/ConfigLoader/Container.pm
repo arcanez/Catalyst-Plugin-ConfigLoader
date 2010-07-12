@@ -98,11 +98,9 @@ sub BUILD {
                         push @main, $_;
                     }
                 }
-                $appname->config( $configs{$_} ) for @main, @locals;
-
-                $s->param('finalize_config');
+                return \%configs;
             },
-            dependencies => [ depends_on('get_config_local_suffix'), depends_on('find_files'), depends_on('appname'), depends_on('finalize_config') ], 
+            dependencies => [ depends_on('get_config_local_suffix'), depends_on('find_files'), depends_on('appname') ],
         );
 
         service finalize_config => (
