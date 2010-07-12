@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/Catalyst/!svn/ver/10698/trunk/Catalyst-Plugin-ConfigLoader/t/mockapp
+END
+mockapp.pl
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/Catalyst/!svn/ver/10698/trunk/Catalyst-Plugin-ConfigLoader/t/mockapp/mockapp.pl
+END
+mockapp_local.pl
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/Catalyst/!svn/ver/7146/trunk/Catalyst-Plugin-ConfigLoader/t/mockapp/mockapp_local.pl
+END

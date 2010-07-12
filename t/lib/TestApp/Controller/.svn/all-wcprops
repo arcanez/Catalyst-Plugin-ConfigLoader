@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/Catalyst/!svn/ver/11102/trunk/Catalyst-Plugin-ConfigLoader/t/lib/TestApp/Controller
+END
+Config.pm
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/Catalyst/!svn/ver/9013/trunk/Catalyst-Plugin-ConfigLoader/t/lib/TestApp/Controller/Config.pm
+END
+Root.pm
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/Catalyst/!svn/ver/11102/trunk/Catalyst-Plugin-ConfigLoader/t/lib/TestApp/Controller/Root.pm
+END
