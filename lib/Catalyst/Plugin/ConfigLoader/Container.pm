@@ -48,8 +48,8 @@ sub BUILD {
         service appname => $self->appname;
 
         service config => (
-            block => sub { shift->param('setup_config'); },
-            dependencies => [ depends_on('setup_config') ],
+            block => sub { shift->param('finalize_config'); },
+            dependencies => [ depends_on('finalize_config') ],
         );
 
         service prefix => (
@@ -69,7 +69,7 @@ sub BUILD {
             dependencies => [ depends_on('file'), depends_on('appname'), depends_on('prefix') ],
         );
 
-        service setup_config => (
+        service raw_config => (
             block => sub {
                 my $s = shift;
 
@@ -100,7 +100,7 @@ sub BUILD {
                 }
                 return \%configs;
             },
-            dependencies => [ depends_on('get_config_local_suffix'), depends_on('find_files'), depends_on('appname') ],
+            dependencies => [ depends_on('get_config_local_suffix'), depends_on('find_files'), depends_on('appname') ], 
         );
 
         service finalize_config => (
@@ -110,13 +110,14 @@ sub BUILD {
                 my $v = Data::Visitor::Callback->new(
                     plain_value => sub {
                         return unless defined $_;
-                        $self->_config_substitutions( $s->param('appname'), $_ );
+                        return $_;
+#                        $self->_config_substitutions( $s->param('appname'), $_ );
                     }
 
                 );
-                $v->visit( $s->param('appname')->config ); 
+                $v->visit( $s->param('raw_config') ); 
             },
-            dependencies => [ depends_on('appname') ],
+            dependencies => [ depends_on('appname'), depends_on('raw_config') ],
         );
 
         service find_files => (
