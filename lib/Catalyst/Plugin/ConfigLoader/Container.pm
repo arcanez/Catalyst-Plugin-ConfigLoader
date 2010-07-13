@@ -77,8 +77,9 @@ sub BUILD {
                 my $v = Data::Visitor::Callback->new(
                     plain_value => sub {
                         return unless defined $_;
-                        return $_;
-#                        $self->_config_substitutions( $s->param('appname'), $_ );
+#                        return $_;
+                        $self->_config_substitutions( $s->param('appname'), $_ );
+$_;
                     }
 
                 );
@@ -117,7 +118,7 @@ sub BUILD {
                 }
                 return \%configs;
             },
-            dependencies => [ depends_on('driver'), depends_on('config_local_suffix'), depends_on('files'), depends_on('appname') ],
+            dependencies => [ depends_on('driver'), depends_on('config_local_suffix'), depends_on('files'), depends_on('appname') ], 
         );
 
         service global_config => (
@@ -219,9 +220,10 @@ sub _fix_syntax {
 
 sub _config_substitutions {
     my $self = shift;
-    my $appname = shift;
+    my $appname = shift; use Data::Dumper::Concise; warn Dumper(\@_);
     my $subs = $self->substitutions;
-    $subs->{ HOME }    ||= sub { shift->path_to( '' ); };
+
+    $subs->{ HOME }    ||= sub { $appname->path_to( '' ); };
     $subs->{ ENV }    ||=
         sub {
             my ( $c, $v ) = @_;
@@ -238,7 +240,7 @@ sub _config_substitutions {
     my $subsre = join( '|', keys %$subs );
 
     for ( @_ ) {
-        s{__($subsre)(?:\((.+?)\))?__}{ $subs->{ $1 }->( $self, $2 ? split( /,/, $2 ) : () ) }eg;
+        s{__($subsre)(?:\((.+?)\))?__}{ $subs->{ $1 }->( $appname, $2 ? split( /,/, $2 ) : () ) }eg;
     }
 }
 
