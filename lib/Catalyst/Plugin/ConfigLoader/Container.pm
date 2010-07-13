@@ -117,7 +117,31 @@ sub BUILD {
                 }
                 return \%configs;
             },
-            dependencies => [ depends_on('config_local_suffix'), depends_on('files'), depends_on('appname') ], 
+            dependencies => [ depends_on('driver'), depends_on('config_local_suffix'), depends_on('files'), depends_on('appname') ],
+        );
+
+        service global_config => (
+            block => sub {
+                my $s = shift;
+
+                my $local_suffix = $s->param('config_local_suffix');
+                my $raw_config = $s->param('raw_config');
+
+                return $raw_config;
+            },
+            dependencies => [ depends_on('config_local_suffix'), depends_on('raw_config') ],
+        );
+
+       service local_config => (
+            block => sub {
+                my $s = shift;
+
+                my $local_suffix = $s->param('config_local_suffix');
+                my $raw_config = $s->param('raw_config');
+
+                return $raw_config;
+            },
+            dependencies => [ depends_on('config_local_suffix'), depends_on('raw_config') ],
         );
 
         service files => (
