@@ -41,19 +41,21 @@ sub BUILD {
     my $self = shift;
 
     container $self => as {
-        service config_local_suffix => $self->config_local_suffix;
+        service appname => $self->appname;
         service driver => $self->driver;
         service file => $self->file;
         service substitutions => $self->substitutions;
-        service appname => $self->appname;
 
-        service config => (
-            block => sub { shift->param('finalize_config'); },
-            dependencies => [ depends_on('finalize_config') ],
+        service extensions => (
+            block => sub {
+                return @{Config::Any->extensions};
+            },
         );
 
         service prefix => (
-            block => sub { Catalyst::Utils::appprefix( shift->param('appname') ) },
+            block => sub {
+                return Catalyst::Utils::appprefix( shift->param('appname') );
+            },
             dependencies => [ depends_on('appname') ],
          );
 
@@ -61,29 +63,44 @@ sub BUILD {
             block => sub {
                 my $s = shift;
 
-                my $path = Catalyst::Utils::env_value( $s->param('appname'), 'CONFIG' )
+                return Catalyst::Utils::env_value( $s->param('appname'), 'CONFIG' )
                 || $s->param('file')
                 || $s->param('appname')->path_to( $s->param('prefix') );
-                return $path;
             },
             dependencies => [ depends_on('file'), depends_on('appname'), depends_on('prefix') ],
+        );
+
+        service config => (
+            block => sub {
+                my $s = shift;
+
+                my $v = Data::Visitor::Callback->new(
+                    plain_value => sub {
+                        return unless defined $_;
+                        return $_;
+#                        $self->_config_substitutions( $s->param('appname'), $_ );
+                    }
+
+                );
+                $v->visit( $s->param('raw_config') );
+            },
+            dependencies => [ depends_on('appname'), depends_on('raw_config') ],
         );
 
         service raw_config => (
             block => sub {
                 my $s = shift;
 
-                my $local_suffix = $s->param('get_config_local_suffix');
-                my $files = $s->param('find_files');
+                my $local_suffix = $s->param('config_local_suffix');
+                my $files = $s->param('files');
                 my $appname = $s->param('appname');
 
-                my $cfg   = Config::Any->load_files(
-                    {   files       => $files,
-                        filter      => \&_fix_syntax,
-                        use_ext     => 1,
-                        driver_args => $s->param('driver'),
-                    }
-                );
+                my $cfg = Config::Any->load_files({
+                    files       => $files,
+                    filter      => \&_fix_syntax,
+                    use_ext     => 1,
+                    driver_args => $s->param('driver'),
+                });
 
                 # map the array of hashrefs to a simple hash
                 my %configs = map { %$_ } @$cfg;
@@ -100,34 +117,17 @@ sub BUILD {
                 }
                 return \%configs;
             },
-            dependencies => [ depends_on('get_config_local_suffix'), depends_on('find_files'), depends_on('appname') ], 
+            dependencies => [ depends_on('config_local_suffix'), depends_on('files'), depends_on('appname') ], 
         );
 
-        service finalize_config => (
+        service files => (
             block => sub {
                 my $s = shift;
 
-                my $v = Data::Visitor::Callback->new(
-                    plain_value => sub {
-                        return unless defined $_;
-                        return $_;
-#                        $self->_config_substitutions( $s->param('appname'), $_ );
-                    }
+                my ( $path, $extension ) = @{$s->param('config_path')}; 
+                my $suffix = $s->param('config_local_suffix');
 
-                );
-                $v->visit( $s->param('raw_config') ); 
-            },
-            dependencies => [ depends_on('appname'), depends_on('raw_config') ],
-        );
-
-        service find_files => (
-            block => sub {
-                my $s = shift;
-
-                my ( $path, $extension ) = @{$s->param('get_config_path')}; 
-                my $suffix = $s->param('get_config_local_suffix');
-
-                my @extensions = @{ Config::Any->extensions }; 
+                my @extensions = $s->param('extensions');
 
                 my @files;
                 if ( $extension ) {
@@ -139,10 +139,10 @@ sub BUILD {
                 }
                 return \@files;
             }, 
-            dependencies => [ depends_on('get_config_path'), depends_on('get_config_local_suffix') ],
+            dependencies => [ depends_on('config_path'), depends_on('config_local_suffix'), depends_on('extensions') ],
         );
 
-        service get_config_path => (
+        service config_path => (
             block => sub {
                 my $s = shift;
 
@@ -161,14 +161,14 @@ sub BUILD {
             dependencies => [ depends_on('prefix'), depends_on('path') ],
         );
 
-        service get_config_local_suffix => (
+        service config_local_suffix => (
             block => sub {
                 my $s = shift;
-                my $suffix = Catalyst::Utils::env_value( $s->param('appname'), 'CONFIG_LOCAL_SUFFIX' ) || $s->param('config_local_suffix');
+                my $suffix = Catalyst::Utils::env_value( $s->param('appname'), 'CONFIG_LOCAL_SUFFIX' ) || $self->config_local_suffix;
 
                 return $suffix;
             },
-            dependencies => [ depends_on('appname'), depends_on('config_local_suffix') ],
+            dependencies => [ depends_on('appname') ],
         );
 
     };
