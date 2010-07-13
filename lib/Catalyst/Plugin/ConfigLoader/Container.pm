@@ -48,7 +48,7 @@ sub BUILD {
 
         service extensions => (
             block => sub {
-                return @{Config::Any->extensions};
+                return \@{Config::Any->extensions};
             },
         );
 
@@ -127,7 +127,7 @@ sub BUILD {
                 my ( $path, $extension ) = @{$s->param('config_path')}; 
                 my $suffix = $s->param('config_local_suffix');
 
-                my @extensions = $s->param('extensions');
+                my @extensions = @{$s->param('extensions')};
 
                 my @files;
                 if ( $extension ) {
