@@ -91,11 +91,11 @@ sub BUILD {
                 my $s = shift;
 
                 my $local_suffix = $s->param('config_local_suffix');
-                my $files = $s->param('files');
+                my @files = @{$s->param('files')};
                 my $appname = $s->param('appname');
 
                 my $cfg = Config::Any->load_files({
-                    files       => $files,
+                    files       => \@files,
                     filter      => \&_fix_syntax,
                     use_ext     => 1,
                     driver_args => $s->param('driver'),
