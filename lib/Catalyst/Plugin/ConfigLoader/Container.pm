@@ -219,12 +219,10 @@ sub _fix_syntax {
 }
 
 sub _config_substitutions {
-    my $self = shift;
-    my $appname = shift; use Data::Dumper::Concise; warn Dumper(\@_);
-    my $subs = $self->substitutions;
+    my ($self, $appname, $subs) = (shift, shift, shift);
 
-    $subs->{ HOME }    ||= sub { $appname->path_to( '' ); };
-    $subs->{ ENV }    ||=
+    $subs->{ HOME } ||= sub { shift->path_to( '' ); };
+    $subs->{ ENV } ||=
         sub {
             my ( $c, $v ) = @_;
             if (! defined($ENV{$v})) {
@@ -235,12 +233,14 @@ sub _config_substitutions {
                 return $ENV{ $v };
             }
         };
-    $subs->{ path_to } ||= sub { $appname->path_to( @_ ); };
+    $subs->{ path_to } ||= sub { shift->path_to( @_ ); };
     $subs->{ literal } ||= sub { return $_[ 1 ]; };
     my $subsre = join( '|', keys %$subs );
 
     for ( @_ ) {
-        s{__($subsre)(?:\((.+?)\))?__}{ $subs->{ $1 }->( $appname, $2 ? split( /,/, $2 ) : () ) }eg;
+        my $arg = $_;
+        $arg =~ s{__($subsre)(?:\((.+?)\))?__}{ $subs->{ $1 }->( $appname, $2 ? split( /,/, $2 ) : () ) }eg;
+        return $arg;
     }
 }
 
