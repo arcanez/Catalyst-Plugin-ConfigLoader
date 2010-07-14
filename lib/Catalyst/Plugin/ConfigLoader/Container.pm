@@ -77,15 +77,13 @@ sub BUILD {
                 my $v = Data::Visitor::Callback->new(
                     plain_value => sub {
                         return unless defined $_;
-#                        return $_;
-                        $self->_config_substitutions( $s->param('appname'), $_ );
-$_;
+                        return $self->_config_substitutions( $s->param('appname'), $s->param('substitutions'), $_ );
                     }
 
                 );
                 $v->visit( $s->param('raw_config') );
             },
-            dependencies => [ depends_on('appname'), depends_on('raw_config') ],
+            dependencies => [ depends_on('appname'), depends_on('raw_config'), depends_on('substitutions') ],
         );
 
         service raw_config => (
