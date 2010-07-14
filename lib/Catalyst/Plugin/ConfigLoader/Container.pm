@@ -3,7 +3,7 @@ use Bread::Board;
 use Moose;
 use Config::Any;
 use Data::Visitor::Callback;
-use Catalyst::Utils;
+use Catalyst::Utils ();
 
 extends 'Bread::Board::Container';
 
