@@ -13,4 +13,7 @@ sub setup {
 
 sub finalize_config {} # back-compat
 
+sub get_config_local_suffix {}
+sub get_config_path {}
+
 1;
