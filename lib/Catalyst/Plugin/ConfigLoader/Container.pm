@@ -90,9 +90,67 @@ sub BUILD {
             block => sub {
                 my $s = shift;
 
-                my $local_suffix = $s->param('config_local_suffix');
-                my @files = @{$s->param('files')};
-                my $appname = $s->param('appname');
+                my @global = @{$s->param('global_config')};
+                my @locals = @{$s->param('local_config')};
+
+                my $config = {};
+                for my $cfg (@global, @locals) {
+                    for (keys %$cfg) {
+                        $config = Catalyst::Utils::merge_hashes( $config, $cfg->{$_} );
+                    }
+                }
+                return $config;
+            },
+            dependencies => [ depends_on('global_config'), depends_on('local_config') ],
+        );
+
+        service global_files => (
+            block => sub {
+                my $s = shift;
+
+                my ( $path, $extension ) = @{$s->param('config_path')};
+
+                my @extensions = @{$s->param('extensions')};
+
+                my @files;
+                if ( $extension ) {
+                    die "Unable to handle files with the extension '${extension}'" unless grep { $_ eq $extension } @extensions;
+                    push @files, $path;
+                } else {
+                    @files = map { "$path.$_" } @extensions;
+                }
+                return \@files;
+            },
+            dependencies => [ depends_on('extensions'), depends_on('config_path') ],
+        );
+
+        service local_files => (
+            block => sub {
+                my $s = shift;
+
+                my ( $path, $extension ) = @{$s->param('config_path')};
+                my $suffix = $s->param('config_local_suffix');
+
+                my @extensions = @{$s->param('extensions')};
+
+                my @files;
+                if ( $extension ) {
+                    die "Unable to handle files with the extension '${extension}'" unless grep { $_ eq $extension } @extensions;
+                    $path =~ s{\.$extension}{_$suffix.$extension};
+                    push @files, $path;
+                } else {
+                    @files = map { "${path}_${suffix}.$_" } @extensions;
+                }
+                return \@files;
+            },
+            dependencies => [ depends_on('extensions'), depends_on('config_path'), depends_on('config_local_suffix') ],
+        );
+
+        service global_config => (
+            block => sub {
+                my $s = shift;
+ 
+                my @files = @{$s->param('global_files')};
 
                 my $cfg = Config::Any->load_files({
                     files       => \@files,
@@ -101,68 +159,27 @@ sub BUILD {
                     driver_args => $s->param('driver'),
                 });
 
-                # map the array of hashrefs to a simple hash
-                my %configs = map { %$_ } @$cfg;
-
-                # split the responses into normal and local cfg
-                my ( @main, @locals );
-                for ( sort keys %configs ) {
-                    if ( m{$local_suffix\.}ms ) {
-                        push @locals, $_;
-                    }
-                    else {
-                        push @main, $_;
-                    }
-                }
-                return \%configs;
+                return $cfg;
             },
-            dependencies => [ depends_on('driver'), depends_on('config_local_suffix'), depends_on('files'), depends_on('appname') ], 
+            dependencies => [ depends_on('global_files') ],
         );
 
-        service global_config => (
+        service local_config => (
             block => sub {
                 my $s = shift;
 
-                my $local_suffix = $s->param('config_local_suffix');
-                my $raw_config = $s->param('raw_config');
+                my @files = @{$s->param('local_files')};
 
-                return $raw_config;
+                my $cfg = Config::Any->load_files({
+                    files       => \@files,
+                    filter      => \&_fix_syntax,
+                    use_ext     => 1,
+                    driver_args => $s->param('driver'),
+                });
+
+                 return $cfg;
             },
-            dependencies => [ depends_on('config_local_suffix'), depends_on('raw_config') ],
-        );
-
-       service local_config => (
-            block => sub {
-                my $s = shift;
-
-                my $local_suffix = $s->param('config_local_suffix');
-                my $raw_config = $s->param('raw_config');
-
-                return $raw_config;
-            },
-            dependencies => [ depends_on('config_local_suffix'), depends_on('raw_config') ],
-        );
-
-        service files => (
-            block => sub {
-                my $s = shift;
-
-                my ( $path, $extension ) = @{$s->param('config_path')}; 
-                my $suffix = $s->param('config_local_suffix');
-
-                my @extensions = @{$s->param('extensions')};
-
-                my @files;
-                if ( $extension ) {
-                    die "Unable to handle files with the extension '${extension}'" unless grep { $_ eq $extension } @extensions;
-                    ( my $local = $path ) =~ s{\.$extension}{_$suffix.$extension};
-                    push @files, $path, $local;
-                } else {
-                    @files = map { ( "$path.$_", "${path}_${suffix}.$_" ) } @extensions;
-                }
-                return \@files;
-            }, 
-            dependencies => [ depends_on('config_path'), depends_on('config_local_suffix'), depends_on('extensions') ],
+            dependencies => [ depends_on('local_files') ],
         );
 
         service config_path => (
