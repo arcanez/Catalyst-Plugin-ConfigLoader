@@ -31,7 +31,7 @@ has substitutions => (
     default => sub { +{} },
 );
 
-has appname => (
+has name => (
     is      => 'rw',
     isa     => 'Str',
     default => 'TestApp',
@@ -41,7 +41,7 @@ sub BUILD {
     my $self = shift;
 
     container $self => as {
-        service appname => $self->appname;
+        service appname => $self->name;
         service driver => $self->driver;
         service file => $self->file;
         service substitutions => $self->substitutions;
