@@ -4,8 +4,11 @@ use warnings;
 use Catalyst::Plugin::ConfigLoader::Container;
 
 sub setup {
-    my $app = shift;
-    my $config = Catalyst::Plugin::ConfigLoader::Container->new( name => $app )->fetch('config')->get; 
+    my $app = shift; 
+
+    my $plugin = $app->config->{'Plugin::ConfigLoader'}; $plugin->{name} = $app;
+
+    my $config = Catalyst::Plugin::ConfigLoader::Container->new( $plugin )->fetch('config')->get; 
     $app->config($config);
     $app->finalize_config; # back-compat
     $app->next::method(@_);
