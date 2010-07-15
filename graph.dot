@@ -1,0 +1,28 @@
+digraph container {
+    rankdir = BT;
+    node [shape=ellipse];
+
+    raw_config -> config;
+    substitutions -> config;
+
+    appname -> substitutions;
+
+    global_config -> raw_config;
+    local_config -> raw_config;
+
+    global_config_files -> global_config;
+    local_config_files -> local_config;
+
+    /* probably doesn't need to be a service */
+    path -> config_path;
+    prefix -> config_path;
+
+    config_path -> global_config_files;
+    config_path -> local_config_files;
+
+    extensions -> global_config_files;
+    extensions -> local_config_files;
+
+    config_local_suffix -> local_config_files;
+    appname -> config_local_suffix;
+}
