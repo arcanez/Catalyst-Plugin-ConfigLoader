@@ -1,14 +1,15 @@
 package Catalyst::Plugin::ConfigLoader;
 use strict;
 use warnings;
-use Catalyst::Plugin::ConfigLoader::Container;
 
 sub setup {
     my $app = shift; 
 
-    my $plugin = $app->config->{'Plugin::ConfigLoader'}; $plugin->{name} = $app;
+    my %args = %{$app->config->{'Plugin::ConfigLoader'} || {} };
+    my $container_class = $args{container_class} || 'Catalyst::Plugin::ConfigLoader::Container';;
+    Class::MOP::load_class( $container_class );
 
-    my $config = Catalyst::Plugin::ConfigLoader::Container->new( $plugin )->fetch('config')->get; 
+    my $config = $container_class->new( %args, name => $app )->fetch('config')->get; 
     $app->config($config);
     $app->finalize_config; # back-compat
     $app->next::method(@_);
