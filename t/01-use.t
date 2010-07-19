@@ -1,5 +1,7 @@
-use Test::More tests => 1;
+use Test::More;
 
 BEGIN {
     use_ok( 'Catalyst::Plugin::ConfigLoader' );
 }
+
+done_testing;

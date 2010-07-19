@@ -4,7 +4,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
-use Test::More tests => 5;
+use Test::More;
 
 use Catalyst::Test 'TestApp';
 
@@ -28,3 +28,5 @@ use Catalyst::Test 'TestApp';
         $home, TestApp->path_to( 'y' ) );
     is( $response->content, $path, 'vars substituted in config var, twice' );
 }
+
+done_testing;
