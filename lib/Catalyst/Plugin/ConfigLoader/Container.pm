@@ -259,4 +259,8 @@ sub _config_substitutions {
     }
 }
 
+no Bread::Board;
+no Moose;
+__PACKAGE__->meta->make_immutable;
+
 1;
