@@ -41,7 +41,7 @@ sub BUILD {
     my $self = shift;
 
     container $self => as {
-        service appname => $self->name;
+        service name => $self->name;
         service driver => $self->driver;
         service file => $self->file;
         service substitutions => $self->substitutions;
@@ -54,20 +54,20 @@ sub BUILD {
 
         service prefix => (
             block => sub {
-                return Catalyst::Utils::appprefix( shift->param('appname') );
+                return Catalyst::Utils::appprefix( shift->param('name') );
             },
-            dependencies => [ depends_on('appname') ],
+            dependencies => [ depends_on('name') ],
          );
 
         service path => (
             block => sub {
                 my $s = shift;
 
-                return Catalyst::Utils::env_value( $s->param('appname'), 'CONFIG' )
+                return Catalyst::Utils::env_value( $s->param('name'), 'CONFIG' )
                 || $s->param('file')
-                || $s->param('appname')->path_to( $s->param('prefix') );
+                || $s->param('name')->path_to( $s->param('prefix') );
             },
-            dependencies => [ depends_on('file'), depends_on('appname'), depends_on('prefix') ],
+            dependencies => [ depends_on('file'), depends_on('name'), depends_on('prefix') ],
         );
 
         service config => (
@@ -77,13 +77,13 @@ sub BUILD {
                 my $v = Data::Visitor::Callback->new(
                     plain_value => sub {
                         return unless defined $_;
-                        return $self->_config_substitutions( $s->param('appname'), $s->param('substitutions'), $_ );
+                        return $self->_config_substitutions( $s->param('name'), $s->param('substitutions'), $_ );
                     }
 
                 );
                 $v->visit( $s->param('raw_config') );
             },
-            dependencies => [ depends_on('appname'), depends_on('raw_config'), depends_on('substitutions') ],
+            dependencies => [ depends_on('name'), depends_on('raw_config'), depends_on('substitutions') ],
         );
 
         service raw_config => (
@@ -204,11 +204,11 @@ sub BUILD {
         service config_local_suffix => (
             block => sub {
                 my $s = shift;
-                my $suffix = Catalyst::Utils::env_value( $s->param('appname'), 'CONFIG_LOCAL_SUFFIX' ) || $self->config_local_suffix;
+                my $suffix = Catalyst::Utils::env_value( $s->param('name'), 'CONFIG_LOCAL_SUFFIX' ) || $self->config_local_suffix;
 
                 return $suffix;
             },
-            dependencies => [ depends_on('appname') ],
+            dependencies => [ depends_on('name') ],
         );
 
     };
@@ -234,7 +234,7 @@ sub _fix_syntax {
 }
 
 sub _config_substitutions {
-    my ($self, $appname, $subs) = (shift, shift, shift);
+    my ($self, $name, $subs) = (shift, shift, shift);
 
     $subs->{ HOME } ||= sub { shift->path_to( '' ); };
     $subs->{ ENV } ||=
@@ -254,7 +254,7 @@ sub _config_substitutions {
 
     for ( @_ ) {
         my $arg = $_;
-        $arg =~ s{__($subsre)(?:\((.+?)\))?__}{ $subs->{ $1 }->( $appname, $2 ? split( /,/, $2 ) : () ) }eg;
+        $arg =~ s{__($subsre)(?:\((.+?)\))?__}{ $subs->{ $1 }->( $name, $2 ? split( /,/, $2 ) : () ) }eg;
         return $arg;
     }
 }
